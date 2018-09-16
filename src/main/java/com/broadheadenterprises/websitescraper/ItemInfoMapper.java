@@ -1,5 +1,6 @@
 package com.broadheadenterprises.websitescraper;
 
+import com.broadheadenterprises.websitescraper.dao.ItemInfo;
 import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.DomNodeList;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
@@ -135,7 +136,7 @@ public class ItemInfoMapper {
                     itemInfo.setCpuCount(value);
                     break;
                 case "RAM - # of Sticks Included":
-                    itemInfo.setStorageBayCount(value);
+                    itemInfo.setRamNumberSticksIncluded(value);
                     break;
                 case "RAM - Total Memory Included":
                     itemInfo.setRamConfiguration(value);
@@ -144,7 +145,7 @@ public class ItemInfoMapper {
                     itemInfo.setCpuManufacturer(value);
                     break;
                 case "RAM - Total Slots":
-                    itemInfo.setRamTotalSlots(value);
+                    itemInfo.setRamTotalAvailableSlots(value);
                     break;
                 case "Faceplate Included":
                     itemInfo.setFaceplateIncluded(value);

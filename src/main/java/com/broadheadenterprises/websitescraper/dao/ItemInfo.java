@@ -1,4 +1,4 @@
-package com.broadheadenterprises.websitescraper;
+package com.broadheadenterprises.websitescraper.dao;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
@@ -28,7 +28,8 @@ public class ItemInfo {
     private String cpuCores;
     private String ramSpeed;
     private String ramConfiguration;
-    private String ramTotalSlots;
+    private String ramTotalAvailableSlots;
+    private String ramNumberSticksIncluded;
     private String storageControllerModel;
     private String storageBayCount;
     private String storageBaySize;

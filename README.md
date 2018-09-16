@@ -2,6 +2,11 @@
 
 Scrapes a website to fetch inventory information
 
+## Features
+* Gathers metadata on servers (price, specs, etc), storing results in database.
+* Rescan previously found products, updating database if they have sold.
+* Prevents rescan of old, sold products.
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.

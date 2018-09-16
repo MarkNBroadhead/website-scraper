@@ -1,6 +1,7 @@
 package com.broadheadenterprises.websitescraper;
 
 import com.broadheadenterprises.websitescraper.config.ConfigProperties;
+import com.broadheadenterprises.websitescraper.dao.ItemInfo;
 import com.broadheadenterprises.websitescraper.repository.ItemInfoRepository;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -81,7 +82,6 @@ public class WebsiteScraperStartupRunner implements CommandLineRunner {
     private boolean previousIdWasSkipped(Integer firstSkippedId) {
         return !previousIdWasNotSkipped(firstSkippedId);
     }
-
 
     private ItemInfo getProductInfo(int id) {
         ItemInfo itemInfo = new ItemInfo();
