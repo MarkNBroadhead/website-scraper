@@ -36,14 +36,16 @@ public class WebsiteScraperStartupRunner implements CommandLineRunner {
     @Override
     public void run(String...args) throws Exception {
         LOG.info("Scanning for product IDs {} through {}", config.getMinId(), config.getMaxId());
+        TreeSet<Integer> allIdRecordsInDb = StreamSupport.stream(repository.findAll().spliterator(), true)
+                .map(ItemInfo::getId)
+                .collect(Collectors.toCollection(TreeSet::new));
         TreeSet<Integer> idsForWhichProductsExist = StreamSupport.stream(repository.findAll().spliterator(), true)
                 .filter(item -> StringUtils.isNotEmpty(item.getPrice()) && !item.isSold())
                 .map(ItemInfo::getId)
                 .collect(Collectors.toCollection(TreeSet::new));
-
         Integer firstSkippedId = null;
         for (int id = config.getMinId(); id <= config.getMaxId(); id++) {
-            if (shouldScanId(idsForWhichProductsExist, id)) {
+            if (shouldScanId(idsForWhichProductsExist, allIdRecordsInDb, id)) {
                 if (previousIdWasSkipped(firstSkippedId)) {
                     LOG.info("Product IDs: {}-{} already exist in database, skipping.", firstSkippedId, id - 1);
                     firstSkippedId = null;
@@ -66,8 +68,8 @@ public class WebsiteScraperStartupRunner implements CommandLineRunner {
         return idsForWhichProductsExist.contains(id) && StringUtils.isNotEmpty(productInfo.getErrorMessage());
     }
 
-    private boolean shouldScanId(TreeSet<Integer> idsForWhichDataExists, int id) {
-        return idsForWhichDataExists.isEmpty()
+    private boolean shouldScanId(TreeSet<Integer> idsForWhichDataExists, TreeSet<Integer> allRecordsInDb, int id) {
+        return !allRecordsInDb.contains(id)
                 || id > idsForWhichDataExists.last()
                 || (config.isRescanExistingProducts() && idsForWhichDataExists.contains(id));
     }
@@ -89,8 +91,8 @@ public class WebsiteScraperStartupRunner implements CommandLineRunner {
                 itemInfo = info.get();
                 LOG.info("Retrieved information for id: {}", id);
             } else {
-                itemInfo.setErrorMessage("Option of none returned from scanProduct");
-                LOG.info("No information retrieved for id: {}", id);
+                itemInfo.setErrorMessage("Option of none returned from scanProduct, this is likely due to a POJO mapping issue. Check application logs.");
+                LOG.error("No information retrieved for id: {}", id);
             }
         } catch (IOException | FailingHttpStatusCodeException e) {
             itemInfo.setErrorMessage(e.getMessage());

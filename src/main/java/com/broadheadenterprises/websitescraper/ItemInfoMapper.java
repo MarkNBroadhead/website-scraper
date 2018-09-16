@@ -4,12 +4,16 @@ import com.gargoylesoftware.htmlunit.html.DomNode;
 import com.gargoylesoftware.htmlunit.html.DomNodeList;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.BiConsumer;
 
 public class ItemInfoMapper {
+    private static final Logger LOG = LoggerFactory.getLogger(ItemInfoMapper.class);
+
     private ItemInfoMapper() {
     }
 
@@ -47,9 +51,25 @@ public class ItemInfoMapper {
             DomNode tableBody = dataTable.get(0).getFirstChild();
             DomNodeList<DomNode> rows = tableBody.getChildNodes();
             for (DomNode node : rows) {
-                String key = node.getFirstChild().getFirstChild().asText();
-                String value = node.getFirstChild().getNextSibling().getFirstChild().asText();
-                kvPairMap.put(key, value);
+                DomNode firstChild = node.getFirstChild();
+                String key = null;
+                String value = null;
+                if (firstChild != null) {
+                    DomNode secondChild = firstChild.getFirstChild();
+                    if (secondChild != null) {
+                        key = secondChild.asText();
+                    }
+                    DomNode nextSibling = firstChild.getNextSibling();
+                    if (nextSibling != null) {
+                        DomNode siblingsChild = nextSibling.getFirstChild();
+                        value = siblingsChild.asText();
+                    }
+                }
+                if (key != null && value != null) {
+                    kvPairMap.put(key, value);
+                } else {
+                    LOG.error("Issue getting Key Value pairs from table for id {} node follows: {}.", id, node.toString());
+                }
             }
             addTableToItemInfo(kvPairMap, itemInfo);
         }

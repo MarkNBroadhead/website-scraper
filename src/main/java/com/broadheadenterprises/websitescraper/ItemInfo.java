@@ -27,7 +27,6 @@ public class ItemInfo {
     private String cpuClockSpeed;
     private String cpuCores;
     private String ramSpeed;
-    private String totalRam;
     private String ramConfiguration;
     private String ramTotalSlots;
     private String storageControllerModel;
