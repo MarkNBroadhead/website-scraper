@@ -44,4 +44,5 @@ public class ItemInfo {
     private String notes;
     @Lob
     private String errorMessage;
+    private boolean isSold = false;
 }

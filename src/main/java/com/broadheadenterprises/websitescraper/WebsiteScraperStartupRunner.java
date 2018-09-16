@@ -36,30 +36,40 @@ public class WebsiteScraperStartupRunner implements CommandLineRunner {
     @Override
     public void run(String...args) throws Exception {
         LOG.info("Scanning for product IDs {} through {}", config.getMinId(), config.getMaxId());
-        TreeSet<Integer> idsForWhichDataExists = StreamSupport.stream(repository.findAll().spliterator(), true)
-                .filter(item -> StringUtils.isNotEmpty(item.getPrice()))
+        TreeSet<Integer> idsForWhichProductsExist = StreamSupport.stream(repository.findAll().spliterator(), true)
+                .filter(item -> StringUtils.isNotEmpty(item.getPrice()) && !item.isSold())
                 .map(ItemInfo::getId)
                 .collect(Collectors.toCollection(TreeSet::new));
+
         Integer firstSkippedId = null;
-        for (int i = config.getMinId(); i <= config.getMaxId(); i++) {
-            if (shouldScanId(idsForWhichDataExists, i)) {
+        for (int id = config.getMinId(); id <= config.getMaxId(); id++) {
+            if (shouldScanId(idsForWhichProductsExist, id)) {
                 if (previousIdWasSkipped(firstSkippedId)) {
-                    LOG.info("Product IDs: {}-{} already exist in database, skipping.", firstSkippedId, i - 1);
+                    LOG.info("Product IDs: {}-{} already exist in database, skipping.", firstSkippedId, id - 1);
                     firstSkippedId = null;
                 }
-                repository.save(getProductInfo(i).setId(i));
+                ItemInfo productInfo = getProductInfo(id).setId(id);
+                if (productHasSold(idsForWhichProductsExist, id, productInfo)) {
+                    productInfo = repository.findById(id).orElse(productInfo).setSold(true);
+                    productInfo.setSold(true);
+                }
+                repository.save(productInfo);
             } else {
                 if (previousIdWasNotSkipped(firstSkippedId)) {
-                    firstSkippedId = i;
+                    firstSkippedId = id;
                 }
             }
         }
     }
 
-    private boolean shouldScanId(TreeSet<Integer> idsForWhichDataExists, int i) {
+    private boolean productHasSold(TreeSet<Integer> idsForWhichProductsExist, int id, ItemInfo productInfo) {
+        return idsForWhichProductsExist.contains(id) && StringUtils.isNotEmpty(productInfo.getErrorMessage());
+    }
+
+    private boolean shouldScanId(TreeSet<Integer> idsForWhichDataExists, int id) {
         return idsForWhichDataExists.isEmpty()
-                || i > idsForWhichDataExists.last()
-                || (config.isRescanExistingProducts() && idsForWhichDataExists.contains(i));
+                || id > idsForWhichDataExists.last()
+                || (config.isRescanExistingProducts() && idsForWhichDataExists.contains(id));
     }
 
     private boolean previousIdWasNotSkipped(Integer firstSkippedId) {
@@ -71,20 +81,20 @@ public class WebsiteScraperStartupRunner implements CommandLineRunner {
     }
 
 
-    private ItemInfo getProductInfo(int i) {
+    private ItemInfo getProductInfo(int id) {
         ItemInfo itemInfo = new ItemInfo();
         try {
-            Optional<ItemInfo> info = scanProduct(i);
+            Optional<ItemInfo> info = scanProduct(id);
             if (info.isPresent()) {
                 itemInfo = info.get();
-                LOG.info("Retrieved information for id: {}", i);
+                LOG.info("Retrieved information for id: {}", id);
             } else {
                 itemInfo.setErrorMessage("Option of none returned from scanProduct");
-                LOG.info("No information retrieved for id: {}", i);
+                LOG.info("No information retrieved for id: {}", id);
             }
         } catch (IOException | FailingHttpStatusCodeException e) {
             itemInfo.setErrorMessage(e.getMessage());
-            LOG.info("Exception when scanning product. This is normal if product has not been created or has been sold: {}", i);
+            LOG.info("Exception when scanning product. This is normal if product has not been created or has been sold: {}", id);
         }
         return itemInfo;
     }
